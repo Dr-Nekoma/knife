@@ -1,0 +1,6 @@
+#+TITLE: Knife: A functional LFE parser
+
+* About
+
+This is part of the Silverware language project for applicative &
+monadic parsing.
