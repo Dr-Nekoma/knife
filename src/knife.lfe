@@ -4,38 +4,31 @@
 (defun main ()
   nil)
 
-;; (tuple "" 'success value)
-;; (tuple "" 'failure message)
+(defmacro comment expr
+  "&rest adds an extra parenthesis
+   to the argument list, hece usage
+   without (args ...)"
+  nil)
 
-;; This is the raw input from the .sw file
-(defrecord parser/input
-  text
-  position)
-
-;; This is the error message that the parser will generate
-(defrecord parser/error
-  message
-  position)
-
-;; This function picks an input a parser and returns a new parser with a bound input
+;; run :: input<'T> -> (input<'U>, result<'U, 'TError>)
 (defrecord parser
-  runParser)
+  run)
 
-;; Functor
-;; Function: a -> b
-;; Parser: a
-;; Parser b
+(defrecord input
+  text)
+
+(defun wrap (value)
+  (make-parser run (lambda (input) (tuple input 'success value))))
+
 (defun parser/map (f parser)
   (make-parser
-   runParser 
+   run
    (lambda (input)
-     (let ((output (funcall (runParser parser) input)))
-       (case output
-	 ((new-input 'success value) (tuple new-input 'success (funcall #'f/1 value)))
-	 ((new-input 'failure message) (tuple new-input 'failure message)))))))
+     (let ((next (funcall (parser-run parser) input)))
+       (case next
+	 ((tuple new-input 'success value) (tuple new-input 'success (funcall f value)))
+	 ((tuple new-input 'failure message) (tuple new-input 'failure message)))))))
 
-(defun test-fun (input)
-  (string:slice input 2))
-
-(set test-input ((make-parser/input text "abcdef" position 0) 'sucesss 2))
-(set test-mapped-parser (parser/map #'test-fun/1 test-input))
+(comment
+ (let ((p (parser-run (parser/map (lambda (x) "DEF") (wrap "ABC")))))
+   (funcall p (make-input text "123"))))
