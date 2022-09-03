@@ -28,5 +28,6 @@
        (justRight
 	(char "[")
 	(justLeft
-	 (many (any-char))
+	 (many (char "a"))
 	 (char "]")))) input))))
+
