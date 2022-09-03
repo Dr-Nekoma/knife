@@ -1,14 +1,15 @@
-{application, 'knife', [
-    {description, "An LFE escript application"},
-    {vsn, git},
-    {registered, []},
-    {applications, [
-        kernel,
-        stdlib
-    ]},
-    {env,[]},
-    {modules, []},
-
-    {licenses, ["Apache 2.0"]},
-    {links, []}
- ]}.
+{application, 'knife',
+ [{description, "A comprehensive LFE rebar3 plugin for all your LFE tooling needs"},
+  {vsn, "0.4.0"},
+  {registered, []},
+  {applications, [
+    kernel,
+    stdlib,
+    lfe]},
+  {env,[]},
+  {modules, [
+    %% main module
+    knife,
+    %% support modules
+    basic
+  ]},]}.
