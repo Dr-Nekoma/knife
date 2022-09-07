@@ -1,14 +1,25 @@
-(defmodule basic)
+(defmodule basic
+  (export (many 1)
+	  (char 1)
+	  (any-number 0)
+	  (justLeft 2)
+	  (justRight 2)
+	  (build-parser 1)
+	  (build-input 1)
+	  (get-parser 1)
+	  (list-alt 1)
+	  (space 0)
+	  (app 2)
+	  (identifier 0)
+	  (while 1)
+	  (predicate-whitespace 1)
+	  (any-char 0)))
 
-(defmacro comment expr
-  "&rest adds an extra parenthesis
-   to the argument list, hence usage
-   without (args ...)"
-  '())
-
-;; run :: input<'T> -> (input<'U>, result<'U, 'TError>)
 (defrecord parser
   run)
+
+(defun get-parser (parser)
+  (parser-run parser))
 
 (defrecord input
   text
@@ -17,6 +28,16 @@
 (defun wrap (value)
   (make-parser run (lambda (input) (tuple input 'success value))))
 
+(defun build-parser (lamb)
+  (make-parser
+   run
+   lamb))
+
+(defun build-input (content)
+  (make-input
+   text
+   content))
+
 (defun parser/map (f parser)
   "F: 'T -> 'U
    Parser: Parser<'T>
@@ -24,7 +45,7 @@
   (make-parser
    run
    (lambda (input)
-     (let ((next (funcall (parser-run ,parser) input)))
+     (let ((next (funcall (parser-run parser) input)))
        (case next
 	 ((tuple new-input 'success value) (tuple new-input 'success (funcall f value)))
 	 ((tuple new-input 'failure message) (tuple new-input 'failure message)))))))
@@ -36,14 +57,10 @@
   (make-parser
    run
    (lambda (input)
-     (let ((next (funcall (parser-run ,parser) input)))
+     (let ((next (funcall (parser-run parser) input)))
        (case next
 	 ((tuple new-input 'success value) (funcall (parser-run (funcall f value)) new-input))
 	 ((tuple new-input 'failure message) (tuple new-input 'failure message)))))))
-
-;;(comment
-;;  (let ((p (parser-run ((wrap "ABC")))))
-;;    (funcall p (make-input text "123"))))
 
 (defun check-number (candidate) (and (>= candidate 48) (=< candidate 57)))
 
@@ -61,6 +78,15 @@
   (if (=:= chr1 chr2)
     (tuple new-input 'success chr1)
     (tuple input 'failure "Didn't find specific char")))
+
+(defun space ()
+  (char " "))
+
+(defun predicate-whitespace (chr)
+  (or (=:= chr (car " ")) (=:= chr (car "\n")) (=:= chr (car "\t"))))
+ 
+(defun identifier ()
+  (justRight (many (space)) (while (lambda (chr) (not (predicate-whitespace chr))))))
 
 (defun char (chr1)
   (make-parser
@@ -139,6 +165,9 @@
 	 ((tuple new-input 'success value) (tuple new-input 'success value))
 	 ((tuple new-input 'failure message) (funcall (parser-run parserB) input)))))))
 
+(defun list-alt (parsers)
+  (lists:foldl #'alt/2 (car parsers) (cdr parsers)))
+
 (defun predTest (char)
   (=:= char 97))
 
@@ -160,10 +189,10 @@
    run
    (lambda (input)
      (let* ((content (input-text input))
-            (splitted-content (string:split predicate content))
+	    (splitted-content (lists:splitwith predicate content))
             (new-input (second splitted-content))
             (value (first splitted-content)))
-       (tuple new-input 'success value)))))
+       (tuple (build-input new-input) 'success value)))))
 
 (defun loop (input parser acc)
                 (case (funcall (parser-run parser) input)
@@ -178,21 +207,3 @@
    (lambda (input)
  (case (loop input parser '())
           ((tuple final-input acc) (tuple final-input 'success (lists:reverse acc)))))))
-
-;; (defun many (parser)
-;;   "Parser: Parser<'T>
-;;   : Parser<List<'T>>"
-;;   (make-parser
-;;    run
-;;    (lambda (input)
-;;       (flet ((loop (input parser acc)
-;;                 (case (funcall (parser-run parser) input)
-;;                   ((tuple new-input 'success value) (loop new-input parser (cons value acc)))
-;;                   ((tuple new-input 'failure message) (tuple new-input acc)))))
-;;         (case (loop input parser '())
-;;           ((tuple final-input acc) (tuple final-input 'success (lists:reverse acc))))))))
-
-; (let ((p (parser-run (many (any-char)))))
-;   (funcall p (make-input text "aaaaa")))
-
-; (parser-run (many (any-char)) (make-input text "aaaaa")) 
