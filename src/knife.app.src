@@ -7,7 +7,7 @@
         stdlib
     ]},
     {env,[]},
-    {modules, [basic, knife]},
+    {modules, [basic, ast, knife]},
 
     {licenses, ["Apache 2.0"]},
     {links, []}

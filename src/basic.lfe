@@ -13,7 +13,8 @@
 	  (identifier 0)
 	  (while 1)
 	  (predicate-whitespace 1)
-	  (any-char 0)))
+	  (any-char 0)
+	  (parser/map 2)))
 
 (defrecord parser
   run)
@@ -194,16 +195,15 @@
             (value (first splitted-content)))
        (tuple (build-input new-input) 'success value)))))
 
-(defun loop (input parser acc)
-                (case (funcall (parser-run parser) input)
-                  ((tuple new-input 'success value) (loop new-input parser (cons value acc)))
-                  ((tuple new-input 'failure message) (tuple new-input acc))))
-
 (defun many (parser)
   "Parser: Parser<'T>
   : Parser<List<'T>>"
   (make-parser
    run
    (lambda (input)
- (case (loop input parser '())
-          ((tuple final-input acc) (tuple final-input 'success (lists:reverse acc)))))))
+     (fletrec ((loop (input parser acc)
+                   (case (funcall (parser-run parser) input)
+                     ((tuple new-input 'success value) (funcall #'loop/3 new-input parser (cons value acc)))
+                     ((tuple new-input 'failure message) (tuple new-input acc)))))
+       (case (loop input parser '())
+         ((tuple final-input acc) (tuple final-input 'success (lists:reverse acc))))))))

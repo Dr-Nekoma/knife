@@ -15,7 +15,10 @@
 		(identifier 0)
 		(while 1)
 		(predicate-whitespace 1)
-		(any-char 0))))
+		(any-char 0)
+		(parser/map 2))
+	  (from ast (make-variable 1)
+		(make-literal-list 1))))
 
 (defun main ()
   (funcall (get-parser (s-expression)) (build-input "[+ 1 1 2 ]")))
@@ -38,26 +41,30 @@
        (justRight
 	(char "[")
 	(justLeft
-	 (variable-expression)
+	 (arithmetic-expression)
 	 (char "]")))) input))))
 
 (defun parser-header (parser)
   (build-parser
      (lambda (input)
        (funcall
-         (get-parser parser) input))))
+        (get-parser parser) input))))
 
-(defun variable-expression ()
-  (parser-header
-   (app
-    (justLeft
-     (identifier)
-     (space))
-    (many (justLeft
-	   (any-number)
-	   (space))))))
+(defun arithmetic-expression ()
+  (variable-expression (any-number) (funcall #'ast:make-literal-list/1 'integer)))
+
+(defun variable-expression (argument-parser argument-function)
+  (parser/map
+   #'ast:make-variable/1
+   (parser-header
+    (app
+     (justLeft
+      (identifier)
+      (space))
+     (many (justLeft
+	    (parser/map argument-function argument-parser)
+	    (space)))))))
 
 ;; [+ 1 1 2 ]
 ;; ---
 ;; {application, {variable, '+'}, [{literal, {integer, 1}}, {literal, {integer, 1}}, {literal, {integer, 2}}]}
-  
