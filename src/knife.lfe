@@ -18,7 +18,8 @@
 		(any-char 0)
 		(parser/map 2))
 	  (from ast (make-variable 1)
-		(make-literal-list 1))))
+		(make-literal-list 2))
+	  (from utils (string-to-integer 1))))
 
 (defun main ()
   (funcall (get-parser (s-expression)) (build-input "[+ 1 1 2 ]")))
@@ -51,7 +52,7 @@
         (get-parser parser) input))))
 
 (defun arithmetic-expression ()
-  (variable-expression (any-number) (funcall #'ast:make-literal-list/1 'integer)))
+  (variable-expression (any-number) (funcall #'ast:make-literal-list/2 'integer #'utils:string-to-integer/1)))
 
 (defun variable-expression (argument-parser argument-function)
   (parser/map
