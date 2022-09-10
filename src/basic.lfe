@@ -1,5 +1,6 @@
 (defmodule basic
-  (export (many 1)
+  (export (many+ 1)
+	  (many* 1)
 	  (char 1)
 	  (any-number 0)
 	  (justLeft 2)
@@ -8,13 +9,19 @@
 	  (build-input 1)
 	  (get-parser 1)
 	  (list-alt 1)
-	  (space 0)
+	  (whitespace 0)
 	  (app 2)
+	  (alt 2)
+	  (optional 1)
+	  (variadic 0)
 	  (identifier 0)
 	  (while 1)
+	  (prefix 1)
 	  (predicate-whitespace 1)
 	  (any-char 0)
 	  (any-boolean 0)
+	  (whitespaces* 0)
+	  (whitespaces+ 0)
 	  (parser/map 2)))
 
 (defrecord parser
@@ -27,8 +34,8 @@
   text
   position)
 
-(defun wrap (value)
-  (make-parser run (lambda (input) (tuple input 'success value))))
+(defun empty ()
+  (make-parser run (lambda (input) (tuple input 'success '()))))
 
 (defun build-parser (lamb)
   (make-parser
@@ -73,10 +80,10 @@
      (case (input-text input)
        ("" (tuple input 'failure "No characters were found"))
        ((cons head tail) (if (check-number head)
-			    (tuple (make-input text tail) 'success (list head))
+			    (tuple (make-input text tail) 'success (tuple 'literal (tuple 'integer (list head))))
 			    (tuple input 'failure "No digits were found")))))))
 
-(defun check-boolean (candidate) (or (=:= candidate 116) (=:= candidate 102)))
+(defun check-boolean (candidate) (or (=:= candidate 84) (=:= candidate 70)))
 
 (defun any-boolean ()
   (make-parser
@@ -85,7 +92,7 @@
      (case (input-text input)
        ("" (tuple input 'failure "No characters were found"))
        ((cons head tail) (if (check-boolean head)
-			    (tuple (make-input text tail) 'success (list head))
+			    (tuple (make-input text tail) 'success (tuple 'literal (tuple 'boolean (list head))))
 			    (tuple input 'failure "No booleans were found")))))))
 
 (defun check-char (chr1 chr2 input new-input)
@@ -93,14 +100,23 @@
     (tuple new-input 'success chr1)
     (tuple input 'failure "Didn't find specific char")))
 
-(defun space ()
-  (char " "))
+(defun whitespace ()
+  (list-alt (list (char " ") (char "\n") (char "\t") (char "\r\t") (char "\r\n"))))
+
+(defun whitespaces+ ()
+  (many+ (whitespace)))
+
+(defun whitespaces* ()
+  (many* (whitespace)))
 
 (defun predicate-whitespace (chr)
   (or (=:= chr (car " ")) (=:= chr (car "\n")) (=:= chr (car "\t"))))
  
 (defun identifier ()
-  (justRight (many (space)) (while (lambda (chr) (not (predicate-whitespace chr))))))
+  (while (lambda (chr) (not (predicate-whitespace chr)))))
+
+(defun variadic ()
+ (app (char "&") (identifier)))
 
 (defun char (chr1)
   (make-parser
@@ -177,10 +193,11 @@
      (let ((next (funcall (parser-run parserA) input)))
        (case next
 	 ((tuple new-input 'success value) (tuple new-input 'success value))
-	 ((tuple new-input 'failure message) (funcall (parser-run parserB) input)))))))
+	 ((tuple _ 'failure _) (funcall (parser-run parserB) input)))))))
 
 (defun list-alt (parsers)
-  (lists:foldl #'alt/2 (car parsers) (cdr parsers)))
+  (let ((rev-parsers (lists:reverse parsers)))
+    (lists:foldl #'alt/2 (car rev-parsers) (cdr rev-parsers))))
 
 (defun predTest (char)
   (=:= char 97))
@@ -208,15 +225,48 @@
             (value (first splitted-content)))
        (tuple (build-input new-input) 'success value)))))
 
-(defun many (parser)
+(defun many+ (parser)
   "Parser: Parser<'T>
   : Parser<List<'T>>"
   (make-parser
    run
    (lambda (input)
-     (fletrec ((loop (input parser acc)
+     (fletrec ((loop (input parser acc nth)
                    (case (funcall (parser-run parser) input)
-                     ((tuple new-input 'success value) (funcall #'loop/3 new-input parser (cons value acc)))
-                     ((tuple new-input 'failure message) (tuple new-input acc)))))
-       (case (loop input parser '())
-         ((tuple final-input acc) (tuple final-input 'success (lists:reverse acc))))))))
+                     ((tuple new-input 'success value) (funcall #'loop/4 new-input parser (cons value acc) (+ 1 nth)))
+                     ((tuple new-input 'failure message) (tuple new-input acc nth)))))
+       (case (loop input parser '() 0)
+	 ((tuple _ _ 0) (tuple input 'failure "Couldn't parse using many+"))
+         ((tuple final-input acc _) (tuple final-input 'success (lists:reverse acc))))))))
+
+(defun many* (parser)
+  (alt (many+ parser) (empty)))
+
+(defun optional (parser)
+  (alt parser (empty)))
+
+;; let prefix (prefix_str: string): string parser =
+;;   { run = fun input ->
+;;           let unexpected_prefix_error =
+;;             Printf.sprintf "expected `%s`" prefix_str
+;;           in
+;;           try
+;;             let prefix_size = String.length prefix_str in
+;;             let input_size = String.length input.text in
+;;             let prefix_input = input |> input_sub 0 prefix_size in
+;;             if String.equal prefix_input.text prefix_str then
+;;               let rest = input |> input_sub prefix_size (input_size - prefix_size) in
+;;               rest, Ok prefix_str
+;;             else
+;;               input, Error unexpected_prefix_error
+;;           with
+;;             Invalid_argument _ -> input, Error unexpected_prefix_error
+;;   }
+
+(defun prefix (str)
+  (make-parser
+   run
+   (lambda (input)
+     (case (string:prefix (input-text input) str)
+       ('nomatch (tuple input 'failure "Couldn't find prefix"))
+       (rest (tuple (build-input rest) 'success str))))))
