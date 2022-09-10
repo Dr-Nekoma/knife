@@ -22,8 +22,10 @@
 		(predicate-whitespace 1)
 		(any-char 0)
 		(empty 0)
+		(invalid-lambda 1)
 		(any-boolean 0)
 		(parser/map 2)
+		(parser/bind 2)
 		(whitespaces* 0)
 		(whitespaces+ 0))
 	  (from ast (make-variable 1)
@@ -33,7 +35,7 @@
 		(id 1))))
 
 (defun main ()
-  (funcall (get-parser (expression)) (build-input "[lambda [x] [+ x 1]]")))
+  (funcall (get-parser (expression)) (build-input "[[lambda [x y z &rest] [+ x y z]] [if T [+ 1 2] 3] 4 5 6 7]")))
 
 (defun debug (parser str)
   (funcall (get-parser parser) (build-input str)))
@@ -46,99 +48,51 @@
 ;;     ((tuple 'ok descriptor) (file:read descriptor 1000000))))
 
 (defun expression ()
-   (list-alt (list (literal)
-		   (application)
-		   (abstraction)
-		   (condition)
-		   (variable))))
-
-;; (defun application ()
-;;    (justRight
-;;     (app (char "[") (whitespaces*))
-;;     (justLeft
-;;      (app (expression) (many* (justRight (whitespaces+) (expression))))
-;;      (app (whitespaces*) (char "]")))))
+  (list-alt (list (condition) (application) (abstraction) (literal) (variable))))
 
 (defun variable ()
-  (parser/map #'ast:make-variable/1 (identifier)))
+  (parser/map #'ast:make-variable/1 (parser/bind #'basic:invalid-lambda/1 (identifier))))
 
 (defun literal ()
   (list-alt (list (any-number) (any-boolean))))
 
-;; (defun parser-header (parser)
-;;   (build-parser
-;;    (lambda (input)
-;;      (funcall (get-parser parser) input))))
-
-;; (defun parameters ()
-;;    (justRight
-;;     (app (char "[") (whitespaces*))
-;;     (justLeft
-;;      (app (many* (justLeft (identifier) (whitespaces*))) (optional (variadic)))
-;;      (app (whitespaces*) (char "]")))))
-
-;; (defun abstraction ()
-;;    (justRight
-;;     (app (char "[") (whitespaces*))
-;;     (justLeft
-;;      (app
-;;       (app (justLeft (prefix "lambda") (whitespaces*)) (parameters))
-;;       (many+ (justRight (whitespaces+) (expression))))
-;;      (app (whitespaces*) (char "]")))))
-
-;; (defun condition ()
-;;   (justRight
-;;    (app (char "[") (whitespaces*))
-;;    (justLeft
-;;     (app
-;;      (justRight (app (prefix "if") (whitespaces+)) (expression))
-;;       (app (justRight (whitespaces+) (expression)) (justRight (whitespaces+) (expression))))
-;;     (app (whitespaces*) (char "]")))))
+(defmacro parser-header (parser)
+  `(build-parser
+    `,(lambda (input)
+	(funcall (get-parser ,parser) input))))
 
 (defun application ()
-  (build-parser
-   (lambda (input)
-      (funcall 
-        (get-parser
-          (justRight
-	   (app (char "[") (whitespaces*))
-	   (justLeft
-	    (app (expression) (many* (justRight (whitespaces+) (expression))))
-	    (app (whitespaces*) (char "]"))))) input))))
+  (parser-header
+   (justRight
+    (app (char "[") (whitespaces*))
+    (justLeft
+     (app (expression) (many* (justRight (whitespaces+) (expression))))
+     (app (whitespaces*) (char "]"))))))
 
 (defun parameters ()
-  (build-parser
-   (lambda (input)
-      (funcall 
-        (get-parser
-          (justRight
-	   (app (char "[") (whitespaces*))
-	   (justLeft
-	    (app (many* (justLeft (identifier) (whitespaces*))) (optional (variadic)))
-	    (app (whitespaces*) (char "]"))))) input))))
+  (parser-header
+   (justRight
+    (app (char "[") (whitespaces*))
+    (justLeft
+     (app (many* (justLeft (identifier) (whitespaces*))) (optional (variadic)))
+     (app (whitespaces*) (char "]"))))))
 
 (defun abstraction ()
-  (build-parser
-   (lambda (input)
-      (funcall 
-        (get-parser
-           (justRight
-	    (app (char "[") (whitespaces*))
-	    (justLeft
-	     (app
-	      (justRight (app (prefix "lambda") (whitespaces*)) (parameters))
-	      (many+ (justRight (whitespaces+) (expression))))
-	     (app (whitespaces*) (char "]"))))) input))))
+  (parser-header
+   (justRight
+    (app (char "[") (whitespaces*))
+    (justLeft
+     (app
+      (app (justLeft (prefix "lambda") (whitespaces*)) (parameters))
+      (many+ (justRight (whitespaces+) (expression))))
+     (app (whitespaces*) (char "]"))))))
 
 (defun condition ()
-  (build-parser
-   (lambda (input)
-      (funcall 
-        (get-parser
-          (justRight
-            (app (char "[") (whitespaces*))
-            (justLeft
-              (app
-                (justRight (app (prefix "if") (whitespaces+)) (expression))
-                (app (justRight (whitespaces+) (expression)) (justRight (whitespaces+) (expression))))
-              (app (whitespaces*) (char "]"))))) input))))
+  (parser-header
+   (justRight
+   (app (char "[") (whitespaces*))
+   (justLeft
+    (app
+     (justRight (app (prefix "if") (whitespaces+)) (expression))
+     (app (justRight (whitespaces+) (expression)) (justRight (whitespaces+) (expression))))
+    (app (whitespaces*) (char "]"))))))

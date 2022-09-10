@@ -12,17 +12,19 @@
 	  (whitespace 0)
 	  (app 2)
 	  (alt 2)
+	  (empty 0)
+	  (invalid-lambda 1)
 	  (optional 1)
 	  (variadic 0)
 	  (identifier 0)
 	  (while 1)
 	  (prefix 1)
-	  (predicate-whitespace 1)
 	  (any-char 0)
 	  (any-boolean 0)
 	  (whitespaces* 0)
 	  (whitespaces+ 0)
-	  (parser/map 2)))
+	  (parser/map 2)
+	  (parser/bind 2)))
 
 (defrecord parser
   run)
@@ -78,7 +80,7 @@
    run
    (lambda (input)
      (case (input-text input)
-       ("" (tuple input 'failure "No characters were found"))
+       ("" (tuple input 'failure "No characters were found | any-number"))
        ((cons head tail) (if (check-number head)
 			    (tuple (make-input text tail) 'success (tuple 'literal (tuple 'integer (list head))))
 			    (tuple input 'failure "No digits were found")))))))
@@ -90,15 +92,10 @@
    run
    (lambda (input)
      (case (input-text input)
-       ("" (tuple input 'failure "No characters were found"))
+       ("" (tuple input 'failure "No characters were found | any-boolean"))
        ((cons head tail) (if (check-boolean head)
 			    (tuple (make-input text tail) 'success (tuple 'literal (tuple 'boolean (list head))))
 			    (tuple input 'failure "No booleans were found")))))))
-
-(defun check-char (chr1 chr2 input new-input)
-  (if (=:= chr1 chr2)
-    (tuple new-input 'success chr1)
-    (tuple input 'failure "Didn't find specific char")))
 
 (defun whitespace ()
   (list-alt (list (char " ") (char "\n") (char "\t") (char "\r\t") (char "\r\n"))))
@@ -109,14 +106,53 @@
 (defun whitespaces* ()
   (many* (whitespace)))
 
-(defun predicate-whitespace (chr)
-  (or (=:= chr (car " ")) (=:= chr (car "\n")) (=:= chr (car "\t"))))
- 
+(defun not-predicate-whitespace (chr)
+  (not (or (=:= chr (car " ")) (=:= chr (car "\n")) (=:= chr (car "\t")))))
+
+(defun not-variadic-lock (chr)
+  (not (=:= chr (car "&"))))
+
+(defun not-delimiters (chr)
+  (not (or (=:= chr (car "[")) (=:= chr (car "]")))))
+
+(defun invalid-lambda (output)
+  (make-parser
+   run
+   (lambda (input)
+     (case output
+       ("lambda" (tuple input 'failure "Found lambda as a variable name"))
+       (_ (tuple input 'success output)))))) 
+
+(defun empty-str ()
+  (make-parser
+   run
+   (lambda (input)
+     (case (input-text input)
+       ("" (tuple input 'failure "No characters were found"))
+       (content (tuple (build-input content) 'success '()))))))
+
+(defun invalid-chr (str)
+  (make-parser
+   run
+   (lambda (input)
+       (if (=:= str (lists:nth 1 (input-text input)))
+	   (tuple input 'failure "Invalid character encountered!~n")
+	 (tuple input 'success '())))))
+
 (defun identifier ()
-  (while (lambda (chr) (not (predicate-whitespace chr)))))
+  (justRight
+    (empty-str)
+    (justRight
+     (app (invalid-chr (car "&")) (app (invalid-chr (car "[")) (invalid-chr (car "]"))))
+     (while (lambda (chr) (and (not-predicate-whitespace chr) (not-variadic-lock chr) (not-delimiters chr)))))))
 
 (defun variadic ()
- (app (char "&") (identifier)))
+ (justRight (char "&") (identifier)))
+
+(defun check-char (chr1 chr2 input new-input)
+  (if (=:= chr1 chr2)
+    (tuple new-input 'success chr1)
+    (tuple input 'failure "Didn't find specific char")))
 
 (defun char (chr1)
   (make-parser
@@ -132,7 +168,7 @@
    run
    (lambda (input)
      (case (input-text input)
-       ("" (tuple input 'failure "No characters were found"))
+       ("" (tuple input 'failure "No characters were found | any-char"))
        ((cons head tail) (tuple  (make-input text tail) 'success (list head)))))))
 
 (defun app (parserA parserB)
@@ -199,20 +235,6 @@
   (let ((rev-parsers (lists:reverse parsers)))
     (lists:foldl #'alt/2 (car rev-parsers) (cdr rev-parsers))))
 
-(defun predTest (char)
-  (=:= char 97))
-
-(defun first (value)
-  (case value
-    ((tuple head tail) head)))
-
-(defun separate (obj)
-  (lists:splitwith (lambda (x) (=:= x "a")) obj))
-
-(defun second (value)
-  (case value
-    ((tuple head tail) tail)))
-
 (defun while (predicate)
   "Predicate: ('T -> bool)
    : Parser<seq<'T>>"
@@ -221,8 +243,8 @@
    (lambda (input)
      (let* ((content (input-text input))
 	    (splitted-content (lists:splitwith predicate content))
-            (new-input (second splitted-content))
-            (value (first splitted-content)))
+            (new-input (tref splitted-content 2))
+            (value (tref splitted-content 1)))
        (tuple (build-input new-input) 'success value)))))
 
 (defun many+ (parser)
@@ -244,24 +266,6 @@
 
 (defun optional (parser)
   (alt parser (empty)))
-
-;; let prefix (prefix_str: string): string parser =
-;;   { run = fun input ->
-;;           let unexpected_prefix_error =
-;;             Printf.sprintf "expected `%s`" prefix_str
-;;           in
-;;           try
-;;             let prefix_size = String.length prefix_str in
-;;             let input_size = String.length input.text in
-;;             let prefix_input = input |> input_sub 0 prefix_size in
-;;             if String.equal prefix_input.text prefix_str then
-;;               let rest = input |> input_sub prefix_size (input_size - prefix_size) in
-;;               rest, Ok prefix_str
-;;             else
-;;               input, Error unexpected_prefix_error
-;;           with
-;;             Invalid_argument _ -> input, Error unexpected_prefix_error
-;;   }
 
 (defun prefix (str)
   (make-parser
