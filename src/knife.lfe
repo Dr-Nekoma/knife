@@ -16,13 +16,16 @@
 		(while 1)
 		(predicate-whitespace 1)
 		(any-char 0)
+		(any-boolean 0)
 		(parser/map 2))
 	  (from ast (make-variable 1)
 		(make-literal-list 2))
-	  (from utils (string-to-integer 1))))
+	  (from utils (string-to-integer 1)
+		(string-to-boolean 1)
+		(id 1))))
 
 (defun main ()
-  (funcall (get-parser (s-expression)) (build-input "[+ 1 1 2 ]")))
+  (funcall (get-parser (s-expression)) (build-input "[&& t t f]")))
 
 (defun debug (parser str)
   (funcall (get-parser parser) (build-input str)))
@@ -34,16 +37,21 @@
 ;;     ((tuple 'error reason) (io:fwrite "Didn't find file"))
 ;;     ((tuple 'ok descriptor) (file:read descriptor 1000000))))
 
+;; (defun application ()
+;;   (parser-header
+;;    (justRight
+;; 	(app (char "[") (whitespaces*))
+;; 	(justLeft
+;; 	 (app (expression) (many* (justRight (whitespaces) (expression)))
+;; 	 (app (whitespaces*) (char "]")))))))
+
 (defun s-expression ()
-  (build-parser
-   (lambda (input)
-     (funcall
-      (get-parser
-       (justRight
+  (parser-header
+   (justRight
 	(char "[")
 	(justLeft
-	 (arithmetic-expression)
-	 (char "]")))) input))))
+	 (boolean-expression)
+	 (char "]")))))
 
 (defun parser-header (parser)
   (build-parser
@@ -52,15 +60,20 @@
         (get-parser parser) input))))
 
 (defun arithmetic-expression ()
-  (variable-expression (any-number) (funcall #'ast:make-literal-list/2 'integer #'utils:string-to-integer/1)))
+  (variable-expression (identifier) (any-number) (funcall #'ast:make-literal-list/2 'integer #'utils:string-to-integer/1)))
 
-(defun variable-expression (argument-parser argument-function)
+(defun boolean-expression ()
+  (variable-expression (identifier) (any-boolean) (funcall #'ast:make-literal-list/2 'boolean #'utils:string-to-boolean/1)))
+
+(defun literal ())
+
+(defun variable-expression (body-parser argument-parser argument-function)
   (parser/map
    #'ast:make-variable/1
    (parser-header
     (app
      (justLeft
-      (identifier)
+      body-parser
       (space))
      (many (justLeft
 	    (parser/map argument-function argument-parser)

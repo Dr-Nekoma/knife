@@ -1,0 +1,28 @@
+* Design of Silverware's Grammar
+
+** Meta-Language
+
+  -  +  => One or more
+  -  *  => Zero or more
+  -  ?  => Zero or one 
+  -  |  => Or logical operator
+  -     => And logical operator
+  -  =  => Mapping
+  - [ ] => Grouping
+  - "x" => String literal 
+    
+** Grammar
+
+  - Boolean = "T" | "F"
+  - Left-Delimiter = "["
+  - Right-Delimiter =  "]"
+  - Literal = Integer | Boolean
+  - Identifier = String
+  - Application = Left-Delimiter WhiteSpace* Expression [WhiteSpace+ Expression]* WhiteSpace* Right-Delimiter
+  - Parameters = Left-Delimiter WhiteSpace* [Identifier WhiteSpace*]* ["&" Identifier]? WhiteSpace* Right-Delimiter
+  - Abstraction = Left-Delimiter WhiteSpace* "lambda" WhiteSpace+ Parameters [WhiteSpace+ Expression]+ WhiteSpace* Right-Delimiter
+  - Condition = Left-Delimiter WhiteSpace* "if" WhiteSpace+ Expression WhiteSpace+ Expression WhiteSpace+ Expression WhiteSpace* Right-Delimiter
+  - Variable = Identifier
+  - Expression =  Literal | Application | Abstraction | Variable | Condition
+  - WhiteSpace = " " | "\n" | "\t" | "\r\t" | "\r\n" | "\c"
+  - File = WhiteSpace* Expression WhiteSpace*

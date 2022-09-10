@@ -14,6 +14,7 @@
 	  (while 1)
 	  (predicate-whitespace 1)
 	  (any-char 0)
+	  (any-boolean 0)
 	  (parser/map 2)))
 
 (defrecord parser
@@ -74,6 +75,18 @@
        ((cons head tail) (if (check-number head)
 			    (tuple (make-input text tail) 'success (list head))
 			    (tuple input 'failure "No digits were found")))))))
+
+(defun check-boolean (candidate) (or (=:= candidate 116) (=:= candidate 102)))
+
+(defun any-boolean ()
+  (make-parser
+   run
+   (lambda (input)
+     (case (input-text input)
+       ("" (tuple input 'failure "No characters were found"))
+       ((cons head tail) (if (check-boolean head)
+			    (tuple (make-input text tail) 'success (list head))
+			    (tuple input 'failure "No booleans were found")))))))
 
 (defun check-char (chr1 chr2 input new-input)
   (if (=:= chr1 chr2)
