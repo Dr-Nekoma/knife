@@ -1,6 +1,5 @@
 (defmodule knife
-  (export (main 0)
-	  (debug 2))
+  (export (parse 1))
   (import (from basic (many+ 1)
 		(many* 1)
 		(char 1)
@@ -37,18 +36,8 @@
 		(string-to-boolean 1)
 		(id 1))))
 
-(defun main ()
-  (funcall (get-parser (expression)) (build-input "[lambda [x y z &rest] x]")))
-
-(defun debug (parser str)
-  (funcall (get-parser parser) (build-input str)))
-
-;; (set filepath "/home/lemos/Programming/DrNekoma/knife/examples/arithmetic.sw")
-
-;; (defun read-file ()
-;;   (case (file:open filepath (list 'read))
-;;     ((tuple 'error reason) (io:fwrite "Didn't find file"))
-;;     ((tuple 'ok descriptor) (file:read descriptor 1000000))))
+(defun parse (file-content)
+  (funcall (get-parser (expression)) (build-input file-content)))
 
 (defun expression ()
   (list-alt (list (condition) (application) (abstraction) (literal) (variable))))
