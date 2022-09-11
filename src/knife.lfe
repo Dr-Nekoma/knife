@@ -29,13 +29,16 @@
 		(whitespaces* 0)
 		(whitespaces+ 0))
 	  (from ast (make-variable 1)
-		(make-literal-list 2))
+		(make-literal-list 2)
+		(make-condition 1)
+		(make-application 1)
+		(make-abstraction 1))
 	  (from utils (string-to-integer 1)
 		(string-to-boolean 1)
 		(id 1))))
 
 (defun main ()
-  (funcall (get-parser (expression)) (build-input "[[lambda [x y z &rest] [+ x y z]] [if T [+ 1 2] 3] 4 5 6 7]")))
+  (funcall (get-parser (expression)) (build-input "[lambda [x y z &rest] x]")))
 
 (defun debug (parser str)
   (funcall (get-parser parser) (build-input str)))
@@ -62,12 +65,14 @@
 	(funcall (get-parser ,parser) input))))
 
 (defun application ()
-  (parser-header
-   (justRight
-    (app (char "[") (whitespaces*))
-    (justLeft
-     (app (expression) (many* (justRight (whitespaces+) (expression))))
-     (app (whitespaces*) (char "]"))))))
+  (parser/map
+   #'ast:make-application/1
+   (parser-header
+    (justRight
+     (app (char "[") (whitespaces*))
+     (justLeft
+      (app (expression) (many* (justRight (whitespaces+) (expression))))
+      (app (whitespaces*) (char "]")))))))
 
 (defun parameters ()
   (parser-header
@@ -78,21 +83,25 @@
      (app (whitespaces*) (char "]"))))))
 
 (defun abstraction ()
-  (parser-header
-   (justRight
-    (app (char "[") (whitespaces*))
-    (justLeft
-     (app
-      (app (justLeft (prefix "lambda") (whitespaces*)) (parameters))
-      (many+ (justRight (whitespaces+) (expression))))
-     (app (whitespaces*) (char "]"))))))
+  (parser/map
+   #'ast:make-abstraction/1
+   (parser-header
+    (justRight
+     (app (char "[") (whitespaces*))
+     (justLeft
+      (app
+       (justRight (justLeft (prefix "lambda") (whitespaces*)) (parameters))
+       (many+ (justRight (whitespaces+) (expression))))
+      (app (whitespaces*) (char "]")))))))
 
 (defun condition ()
-  (parser-header
-   (justRight
-   (app (char "[") (whitespaces*))
-   (justLeft
-    (app
-     (justRight (app (prefix "if") (whitespaces+)) (expression))
-     (app (justRight (whitespaces+) (expression)) (justRight (whitespaces+) (expression))))
-    (app (whitespaces*) (char "]"))))))
+  (parser/map
+   #'ast:make-condition/1
+   (parser-header
+    (justRight
+     (app (char "[") (whitespaces*))
+     (justLeft
+      (app
+       (justRight (app (prefix "if") (whitespaces+)) (expression))
+       (app (justRight (whitespaces+) (expression)) (justRight (whitespaces+) (expression))))
+      (app (whitespaces*) (char "]")))))))

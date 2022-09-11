@@ -24,7 +24,9 @@
 	  (whitespaces* 0)
 	  (whitespaces+ 0)
 	  (parser/map 2)
-	  (parser/bind 2)))
+	  (parser/bind 2))
+  (import (from utils (string-to-integer 1)
+		(string-to-boolean 1))))
 
 (defrecord parser
   run)
@@ -82,7 +84,7 @@
      (case (input-text input)
        ("" (tuple input 'failure "No characters were found | any-number"))
        ((cons head tail) (if (check-number head)
-			    (tuple (make-input text tail) 'success (tuple 'literal (tuple 'integer (list head))))
+			    (tuple (make-input text tail) 'success (tuple 'literal (tuple 'integer (utils:string-to-integer (list head)))))
 			    (tuple input 'failure "No digits were found")))))))
 
 (defun check-boolean (candidate) (or (=:= candidate 84) (=:= candidate 70)))
@@ -94,7 +96,7 @@
      (case (input-text input)
        ("" (tuple input 'failure "No characters were found | any-boolean"))
        ((cons head tail) (if (check-boolean head)
-			    (tuple (make-input text tail) 'success (tuple 'literal (tuple 'boolean (list head))))
+			    (tuple (make-input text tail) 'success (tuple 'literal (tuple 'boolean (utils:string-to-boolean (list head)))))
 			    (tuple input 'failure "No booleans were found")))))))
 
 (defun whitespace ()

@@ -7,8 +7,8 @@
   (tref (string:to_integer str) 1))
 
 (defun string-to-boolean
-  (("t") 'true)
-  (("f") 'false))
+  (("T") 'true)
+  (("F") 'false))
 
 (defun id (x) x)
 
