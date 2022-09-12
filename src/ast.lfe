@@ -21,8 +21,8 @@
   (tuple 'rest str))
 
 (defun make-abstraction
-  (((tuple (tuple parameters "") body)) (tuple 'abstraction (tuple 'notVariadic (lists:map #'make-argument/1 parameters) body)))
-  (((tuple (tuple parameters variadic) body)) (tuple 'abstraction (lists:append (lists:map #'make-argument/1 parameters) (list (make-rest variadic))) body)))
+  (((tuple (tuple parameters "") body)) (tuple 'abstraction (tuple 'notVariadic (lists:map #'make-argument/1 parameters)) body))
+  (((tuple (tuple parameters variadic) body)) (tuple 'abstraction (lists:append (lists:map #'make-argument/1 parameters)) (list (make-rest variadic))) body))
 
 (defun make-literal-list (type transformation)
   (lambda (arg)
