@@ -38,7 +38,7 @@
 
 (defun parse (file-content)
   (case (funcall (get-parser (expression)) (build-input file-content))
-    (tuple input status result) (tuple status result)))
+    ((tuple input status result) (tuple status result))))
 
 (defun expression ()
   (list-alt (list (condition) (application) (abstraction) (literal) (variable))))
