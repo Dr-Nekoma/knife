@@ -1,4 +1,4 @@
-{application, 'knife', [
+{application, knife, [
     {description, "An LFE escript application"},
     {vsn, git},
     {registered, []},
@@ -9,6 +9,7 @@
     {env,[]},
     {modules, [basic, ast, utils, knife]},
 
+    {pkg_name, knife},
     {licenses, ["Apache 2.0"]},
-    {links, []}
+    {links, [{"GitHub", "https://github.com/Dr-Nekoma/knife"}]}
  ]}.
