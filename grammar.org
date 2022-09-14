@@ -19,7 +19,13 @@
   - Literal = Integer | Boolean
   - Identifier = String
   - Application = Left-Delimiter WhiteSpace* Expression [WhiteSpace+ Expression]* WhiteSpace* Right-Delimiter
-  - Parameters = Left-Delimiter WhiteSpace* [Identifier WhiteSpace*]* ["&" Identifier]? WhiteSpace* Right-Delimiter
+  - Parameters = Left-Delimiter WhiteSpace* [Typed-Parameter WhiteSpace*]* Typed-Variadic WhiteSpace* Right-Delimiter
+  - Typed-Variadic = ["&" Type-Left-Delimiter WhiteSpace* Identifier WhiteSpace+ Type WhiteSpace* Type-Right-Delimiter]?
+  - Type-Left-Delimiter = "("
+  - Type-Right-Delimiter = ")"
+  - Typed-Parameter = Type-Left-Delimiter WhiteSpace* Identifier WhiteSpace+ Type WhiteSpace* Type-Right-Delimiter
+  - Type-Atom = "Integer" | "Boolean"
+  - Type = Type-Atom | Type-Left-Delimiter WhiteSpace* "->" WhiteSpace* Type WhiteSpace+ Type [WhiteSpace+ Type]* WhiteSpace* Type-Right-Delimiter
   - Abstraction = Left-Delimiter WhiteSpace* "lambda" WhiteSpace+ Parameters [WhiteSpace+ Expression]+ WhiteSpace* Right-Delimiter
   - Condition = Left-Delimiter WhiteSpace* "if" WhiteSpace+ Expression WhiteSpace+ Expression WhiteSpace+ Expression WhiteSpace* Right-Delimiter
   - Variable = Identifier

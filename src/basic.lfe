@@ -15,7 +15,6 @@
 	  (empty 0)
 	  (invalid-lambda 1)
 	  (optional 1)
-	  (variadic 0)
 	  (identifier 0)
 	  (while 1)
 	  (prefix 1)
@@ -147,9 +146,6 @@
     (justRight
      (app (invalid-chr (car "&")) (app (invalid-chr (car "[")) (invalid-chr (car "]"))))
      (while (lambda (chr) (and (not-predicate-whitespace chr) (not-variadic-lock chr) (not-delimiters chr)))))))
-
-(defun variadic ()
- (justRight (char "&") (identifier)))
 
 (defun check-char (chr1 chr2 input new-input)
   (if (=:= chr1 chr2)

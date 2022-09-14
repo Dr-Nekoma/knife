@@ -17,7 +17,6 @@
 		(alt 2)
 		(prefix 1)
 		(optional 1)
-		(variadic 0)
 		(predicate-whitespace 1)
 		(any-char 0)
 		(empty 0)
@@ -31,13 +30,16 @@
 		(make-literal-list 2)
 		(make-condition 1)
 		(make-application 1)
-		(make-abstraction 1))
+		(make-abstraction 1)
+		(make-arrow 1))
 	  (from utils (string-to-integer 1)
 		(string-to-boolean 1)
-		(id 1))))
+		(id 1)
+		(add-variadic-tag 1))))
 
 (defun parse (file-content)
-  (case (funcall (get-parser (expression)) (build-input file-content))
+  (case (funcall (get-parser (expression))
+		 (build-input file-content))
     ((tuple input status result) (tuple status result))))
 
 (defun expression ()
@@ -69,8 +71,32 @@
    (justRight
     (app (char "[") (whitespaces*))
     (justLeft
-     (app (many* (justLeft (identifier) (whitespaces*))) (optional (variadic)))
+     (app
+      (many*
+       (justLeft
+	(app
+	 (justRight
+	  (app (whitespaces*) (char "("))
+	  (justRight (whitespaces*) (identifier)))
+	 (justLeft
+	  (justRight (whitespaces+) (type))
+	  (app (whitespaces*) (char ")"))))
+	(whitespaces*)))
+       (optional (variadic)))
      (app (whitespaces*) (char "]"))))))
+
+(defun variadic ()
+  (justRight
+   (char "&")
+   (justLeft
+    (app
+     (justRight
+      (char "(")
+      (identifier))
+     (justRight
+       (whitespaces+)
+       (type)))
+    (app (whitespaces*) (char ")")))))
 
 (defun abstraction ()
   (parser/map
@@ -95,3 +121,38 @@
        (justRight (app (prefix "if") (whitespaces+)) (expression))
        (app (justRight (whitespaces+) (expression)) (justRight (whitespaces+) (expression))))
       (app (whitespaces*) (char "]")))))))
+
+(defun type ()
+  (parser-header
+   (alt
+    (type-atom)
+    (arrow))))
+
+(defun type-atom ()
+  (parser-header
+   (alt
+    (prefix "Integer")
+    (prefix "Boolean"))))
+
+(defun type-variadic ()
+  (parser/map
+   #'utils:add-variadic-tag/1
+   (parser-header
+    (justRight
+     (char "&")
+     (type)))))
+
+(defun arrow ()
+  (parser/map
+   #'ast:make-arrow/1
+   (parser-header
+    (justRight
+     (app (char "(") (whitespaces*))
+     (justRight
+      (app (prefix "->") (whitespaces*))
+      (justLeft
+       (app
+	(justLeft (alt (type-variadic) (type)) (whitespaces+))
+	(type))
+       (app (whitespaces*) (char ")"))))))))
+
