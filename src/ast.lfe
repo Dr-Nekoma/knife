@@ -1,6 +1,5 @@
 (defmodule ast
   (export (make-variable 1)
-	  (make-literal-list 2)
 	  (make-condition 1)
 	  (make-application 1)
 	  (make-abstraction 1)
@@ -15,10 +14,13 @@
 (defun make-application
   (((tuple function arguments)) (tuple 'application function arguments)))
 
+(defun type-to-atom
+  (("Integer") 'integer)
+  (("Boolean") 'boolean)
+  ((arrow) arrow))
+
 (defun make-argument
-  (((tuple arg "Integer")) (tuple 'integer arg))
-  (((tuple arg "Boolean")) (tuple 'boolean arg))
-  (((tuple arg arrow)) (tuple arrow arg)))
+  (((tuple arg type)) (tuple (type-to-atom type) arg)))
 
 (defun make-abstraction
   (((tuple (tuple parameters '()) body)) (tuple 'abstraction (tuple 'notVariadic (lists:map #'make-argument/1 parameters)) body))
@@ -27,11 +29,5 @@
 (defun make-arrow
   (((tuple first-type second-type))
    (case first-type
-     ((tuple 'variadic real-first-type) (tuple 'function 'variadic (list real-first-type) second-type))
-     (_ (tuple 'function 'notVariadic (list first-type) second-type)))))
-
-(defun make-literal-list (type transformation)
-  (lambda (arg)
-    (flet ((wrap-literal (value)
-			 (tuple 'literal (tuple type (funcall transformation value)))))
-      (funcall #'wrap-literal/1 arg))))
+     ((tuple 'variadic real-first-type) (tuple 'function 'variadic (type-to-atom real-first-type) (type-to-atom second-type)))
+     (_ (tuple 'function 'notVariadic (type-to-atom first-type) (type-to-atom second-type))))))
