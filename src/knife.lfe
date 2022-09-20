@@ -133,6 +133,25 @@
      (char "&")
      (type)))))
 
+(defun variadic-arg ()
+  (parser-header
+    (optional (justRight (char "&") (type)))))
+
+(defun non-empty-arg ()
+  (parser-header
+    (many+
+     (justLeft
+      (type)
+      (whitespaces*)))))
+
+(defun args ()
+  (parser-header
+   (justRight
+    (app (char "(") (whitespaces*))
+    (justLeft
+     (app (optional (non-empty-arg)) (variadic-arg))
+     (app (whitespaces*) (char ")"))))))
+
 (defun arrow ()
   (parser/map
    #'ast:make-arrow/1
@@ -143,7 +162,7 @@
       (app (prefix "->") (whitespaces*))
       (justLeft
        (app
-	(justLeft (alt (type-variadic) (type)) (whitespaces+))
+	(justLeft (args) (whitespaces*))
 	(type))
        (app (whitespaces*) (char ")"))))))))
 

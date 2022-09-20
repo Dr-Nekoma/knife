@@ -28,6 +28,10 @@
 
 (defun make-arrow
   (((tuple first-type second-type))
-   (case first-type
-     ((tuple 'variadic real-first-type) (tuple 'function 'variadic (type-to-atom real-first-type) (type-to-atom second-type)))
-     (_ (tuple 'function 'notVariadic (type-to-atom first-type) (type-to-atom second-type))))))
+   (let ((return (type-to-atom second-type)))
+     (case first-type
+       ((tuple non-variadic-args '()) (tuple 'function 'notVariadic (lists:map #'type-to-atom/1 non-variadic-args) return))
+       ((tuple non-variadic-args variadic-arg) (let ((args (lists:append (lists:map #'type-to-atom/1 non-variadic-args) (list variadic-arg))))
+						 (tuple 'function 'variadic (lists:map #'type-to-atom/1 args) return)))
+       ((tuple '() '()) (tuple 'function 'notVariadic '() return))
+       ((tuple '() variadic-arg) (tuple 'function 'variadic (list (type-to-atom variadic-arg)) return))))))

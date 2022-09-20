@@ -1,6 +1,38 @@
-#+TITLE: Knife: A functional LFE parser
+#+TITLE: knife 🔪
 
-* About
+This is a parser combinator library for the Silverware programming language implemented in LFE, a CL-flavored language within
+the Erlang ecosystem. 
 
-This is part of the Silverware language project for applicative &
-monadic parsing.
+* External Dependencies
+
+- [nix-shell](https://nixos.org/download.html)
+
+* How to use knife
+
+To execute the program you do:
+
+#+begin_src shell
+nix-shell
+rebar3 lfe repl
+#+end_src
+
+Next, you need the Silverware code that you want to parse. There are some samples in the *examples* folder.
+In the shell, proceed with:
+
+#+begin_src shell
+(knife:parse <SAMPLE_TEXT>)
+#+end_src
+
+Here it is an example of output:
+
+[[file:docs/example_output.png]]
+
+## Developers
+
+- EduardoLR10
+- ribeirotomas1904
+- MMagueta
+
+## Dr.Nekoma
+
+Built live on [twitch](https://www.twitch.tv/drnekoma) and archived on [youtube](https://www.youtube.com/channel/UCMyzdYsPiBU3xoqaOeahr6Q)
