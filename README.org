@@ -5,7 +5,7 @@ the Erlang ecosystem.
 
 * External Dependencies
 
-- [nix-shell](https://nixos.org/download.html)
+- [[https://nixos.org/download.html][nix-shell]]
 
 * How to use knife
 
@@ -27,12 +27,12 @@ Here it is an example of output:
 
 [[file:docs/example_output.png]]
 
-## Developers
+* Developers
 
 - EduardoLR10
 - ribeirotomas1904
 - MMagueta
 
-## Dr.Nekoma
+* Dr.Nekoma
 
-Built live on [twitch](https://www.twitch.tv/drnekoma) and archived on [youtube](https://www.youtube.com/channel/UCMyzdYsPiBU3xoqaOeahr6Q)
+Built live on [[https://www.twitch.tv/drnekoma][twitch]] and archived on [[https://www.youtube.com/channel/UCMyzdYsPiBU3xoqaOeahr6Q][youtube]]
