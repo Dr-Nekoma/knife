@@ -22,9 +22,9 @@
   - Parameters = Left-Delimiter WhiteSpace* [Typed-Parameter WhiteSpace*]* Typed-Variadic WhiteSpace* Right-Delimiter
   - Typed-Variadic = ["&" Type-Left-Delimiter WhiteSpace* Identifier WhiteSpace+ Type WhiteSpace* Type-Right-Delimiter]?
   - Typed-Variadic-Arg = ["&" Type]?
-  - Args = Empty-Args | Non-Empty-Args | Typed-Variadic-Arg
+  - Args = Empty-Args | Non-Empty-Args Typed-Variadic-Arg
   - Empty-Args = "(" WhiteSpace* ")"
-  - Non-Empty-Args = [Type WhiteSpace*]+ Typed-Variadic-Arg
+  - Non-Empty-Args = [Type WhiteSpace*]+
   - Type-Left-Delimiter = "("
   - Type-Right-Delimiter = ")"
   - Typed-Parameter = Type-Left-Delimiter WhiteSpace* Identifier WhiteSpace+ Type WhiteSpace* Type-Right-Delimiter
