@@ -23,7 +23,7 @@
 		(whitespaces+ 0))
 	  (from ast (make-variable 1)
 		(make-condition 1)
-		(make-seqlication 1)
+		(make-application 1)
 		(make-abstraction 1)
 		(make-arrow 1))
 	  (from utils (add-variadic-tag 1))))
@@ -34,7 +34,7 @@
     ((tuple input status result) (tuple status result))))
 
 (defun expression ()
-  (list-alt (list (condition) (seqlication) (abstraction) (literal) (variable))))
+  (list-alt (list (condition) (application) (abstraction) (literal) (variable))))
 
 (defun variable ()
   (parser/map #'ast:make-variable/1 (parser/bind #'basic:invalid-lambda/1 (identifier))))
@@ -47,9 +47,9 @@
     `,(lambda (input)
 	(funcall (get-parser ,parser) input))))
 
-(defun seqlication ()
+(defun application ()
   (parser/map
-   #'ast:make-seqlication/1
+   #'ast:make-application/1
    (parser-header
     (justRight
      (seq (char "[") (whitespaces*))
