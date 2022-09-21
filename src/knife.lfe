@@ -10,7 +10,7 @@
 		(build-input 1)
 		(get-parser 1)
 		(list-alt 1)
-		(app 2)
+		(seq 2)
 		(identifier 0)
 		(alt 2)
 		(prefix 1)
@@ -23,7 +23,7 @@
 		(whitespaces+ 0))
 	  (from ast (make-variable 1)
 		(make-condition 1)
-		(make-application 1)
+		(make-seqlication 1)
 		(make-abstraction 1)
 		(make-arrow 1))
 	  (from utils (add-variadic-tag 1))))
@@ -34,7 +34,7 @@
     ((tuple input status result) (tuple status result))))
 
 (defun expression ()
-  (list-alt (list (condition) (application) (abstraction) (literal) (variable))))
+  (list-alt (list (condition) (seqlication) (abstraction) (literal) (variable))))
 
 (defun variable ()
   (parser/map #'ast:make-variable/1 (parser/bind #'basic:invalid-lambda/1 (identifier))))
@@ -47,71 +47,71 @@
     `,(lambda (input)
 	(funcall (get-parser ,parser) input))))
 
-(defun application ()
+(defun seqlication ()
   (parser/map
-   #'ast:make-application/1
+   #'ast:make-seqlication/1
    (parser-header
     (justRight
-     (app (char "[") (whitespaces*))
+     (seq (char "[") (whitespaces*))
      (justLeft
-      (app (expression) (many* (justRight (whitespaces+) (expression))))
-      (app (whitespaces*) (char "]")))))))
+      (seq (expression) (many* (justRight (whitespaces+) (expression))))
+      (seq (whitespaces*) (char "]")))))))
 
 (defun parameters ()
   (parser-header
    (justRight
-    (app (char "[") (whitespaces*))
+    (seq (char "[") (whitespaces*))
     (justLeft
-     (app
+     (seq
       (many*
        (justLeft
-	(app
+	(seq
 	 (justRight
-	  (app (whitespaces*) (char "("))
+	  (seq (whitespaces*) (char "("))
 	  (justRight (whitespaces*) (identifier)))
 	 (justLeft
 	  (justRight (whitespaces+) (type))
-	  (app (whitespaces*) (char ")"))))
+	  (seq (whitespaces*) (char ")"))))
 	(whitespaces*)))
        (optional (variadic)))
-     (app (whitespaces*) (char "]"))))))
+     (seq (whitespaces*) (char "]"))))))
 
 (defun variadic ()
   (justRight
    (char "&")
    (justLeft
-    (app
+    (seq
      (justRight
       (char "(")
       (identifier))
      (justRight
        (whitespaces+)
        (type)))
-    (app (whitespaces*) (char ")")))))
+    (seq (whitespaces*) (char ")")))))
 
 (defun abstraction ()
   (parser/map
    #'ast:make-abstraction/1
    (parser-header
     (justRight
-     (app (char "[") (whitespaces*))
+     (seq (char "[") (whitespaces*))
      (justLeft
-      (app
+      (seq
        (justRight (justLeft (prefix "lambda") (whitespaces*)) (parameters))
        (many+ (justRight (whitespaces+) (expression))))
-      (app (whitespaces*) (char "]")))))))
+      (seq (whitespaces*) (char "]")))))))
 
 (defun condition ()
   (parser/map
    #'ast:make-condition/1
    (parser-header
     (justRight
-     (app (char "[") (whitespaces*))
+     (seq (char "[") (whitespaces*))
      (justLeft
-      (app
-       (justRight (app (prefix "if") (whitespaces+)) (expression))
-       (app (justRight (whitespaces+) (expression)) (justRight (whitespaces+) (expression))))
-      (app (whitespaces*) (char "]")))))))
+      (seq
+       (justRight (seq (prefix "if") (whitespaces+)) (expression))
+       (seq (justRight (whitespaces+) (expression)) (justRight (whitespaces+) (expression))))
+      (seq (whitespaces*) (char "]")))))))
 
 (defun type ()
   (parser-header
@@ -147,22 +147,22 @@
 (defun args ()
   (parser-header
    (justRight
-    (app (char "(") (whitespaces*))
+    (seq (char "(") (whitespaces*))
     (justLeft
-     (app (optional (non-empty-arg)) (variadic-arg))
-     (app (whitespaces*) (char ")"))))))
+     (seq (optional (non-empty-arg)) (variadic-arg))
+     (seq (whitespaces*) (char ")"))))))
 
 (defun arrow ()
   (parser/map
    #'ast:make-arrow/1
    (parser-header
     (justRight
-     (app (char "(") (whitespaces*))
+     (seq (char "(") (whitespaces*))
      (justRight
-      (app (prefix "->") (whitespaces*))
+      (seq (prefix "->") (whitespaces*))
       (justLeft
-       (app
+       (seq
 	(justLeft (args) (whitespaces*))
 	(type))
-       (app (whitespaces*) (char ")"))))))))
+       (seq (whitespaces*) (char ")"))))))))
 

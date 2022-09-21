@@ -9,7 +9,7 @@
 	  (build-input 1)
 	  (get-parser 1)
 	  (list-alt 1)
-	  (app 2)
+	  (seq 2)
 	  (alt 2)
 	  (invalid-lambda 1)
 	  (optional 1)
@@ -140,7 +140,7 @@
   (justRight
     (empty-str)
     (justRight
-     (app (invalid-chr (car "&")) (app (invalid-chr (car "[")) (invalid-chr (car "]"))))
+     (seq (invalid-chr (car "&")) (seq (invalid-chr (car "[")) (invalid-chr (car "]"))))
      (while (lambda (chr) (and (not-predicate-whitespace chr) (not-variadic-lock chr) (not-delimiters chr)))))))
 
 (defun check-char (chr1 chr2 input new-input)
@@ -165,7 +165,7 @@
        ("" (tuple input 'failure "No characters were found | any-char"))
        ((cons head tail) (tuple  (make-input text tail) 'success (list head)))))))
 
-(defun app (parserA parserB)
+(defun seq (parserA parserB)
   "ParserA: Parser<'T>
    ParserB: Parser<'U>
    : Parser<'T * 'U>"
