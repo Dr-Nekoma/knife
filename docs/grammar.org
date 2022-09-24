@@ -21,9 +21,9 @@
   - Application = Left-Delimiter WhiteSpace* Expression [WhiteSpace+ Expression]* WhiteSpace* Right-Delimiter
   - Parameters = Left-Delimiter WhiteSpace* [Typed-Parameter WhiteSpace*]* Typed-Variadic WhiteSpace* Right-Delimiter
   - Typed-Variadic = ["&" Type-Left-Delimiter WhiteSpace* Identifier WhiteSpace+ Type WhiteSpace* Type-Right-Delimiter]?
-  - Typed-Variadic-Arg = ["&" Type]?
-  - Args = Type-Left-Delimiter WhiteSpaces* Non-Empty-Args? Typed-Variadic-Arg WhiteSpace* Type-Right-Delimiter
-  - Non-Empty-Args = [Type WhiteSpace*]+
+  - Typed-Variadic-Arg = [WhiteSpace+ "&" Type]
+  - Args = Type-Left-Delimiter Non-Empty-Args? Typed-Variadic-Arg? WhiteSpace* Type-Right-Delimiter
+  - Non-Empty-Args = [WhiteSpace* Type]+
   - Type-Left-Delimiter = "("
   - Type-Right-Delimiter = ")"
   - Typed-Parameter = Type-Left-Delimiter WhiteSpace* Identifier WhiteSpace+ Type WhiteSpace* Type-Right-Delimiter
