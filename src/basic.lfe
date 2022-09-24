@@ -70,15 +70,22 @@
 	 ((tuple new-input 'success value) (funcall (parser-run (funcall f value)) new-input))
 	 ((tuple new-input 'failure message) (tuple new-input 'failure message)))))))
 
-(defun check-number (candidate) (and (>= candidate 48) (=< candidate 57)))
+(defun predicate-number (candidate) (and (>= candidate 48) (=< candidate 57)))
 
 (defun any-number ()
+  (parser/map
+   #'utils:string-to-integer/1
+   (justRight
+    (empty-str)
+    (while #'predicate-number/1))))
+
+(defun any-digit ()
   (make-parser
    run
    (lambda (input)
      (case (input-text input)
        ("" (tuple input 'failure "No characters were found | any-number"))
-       ((cons head tail) (if (check-number head)
+       ((cons head tail) (if (predicate-number head)
 			    (tuple (make-input text tail) 'success (tuple 'literal (tuple 'integer (utils:string-to-integer (list head)))))
 			    (tuple input 'failure "No digits were found")))))))
 
