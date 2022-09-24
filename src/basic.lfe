@@ -10,7 +10,7 @@
 	  (list-alt 1)
 	  (seq 2)
 	  (alt 2)
-	  (invalid-lambda 1)
+	  (invalid-keywords 1)
 	  (optional 1)
 	  (identifier 0)
 	  (prefix 1)
@@ -107,12 +107,13 @@
 (defun not-delimiters (chr)
   (not (or (=:= chr (car "[")) (=:= chr (car "]")))))
 
-(defun invalid-lambda (output)
+(defun invalid-keywords (output)
   (make-parser
    run
    (lambda (input)
      (case output
        ("lambda" (tuple input 'failure (tuple  "Found lambda as a variable name in ~p~n" `,(list input))))
+       ("if" (tuple input 'failure (tuple  "Found if as a variable name in ~p~n" `,(list input))))
        (_ (tuple input 'success output)))))) 
 
 (defun empty-str ()

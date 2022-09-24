@@ -5,7 +5,7 @@
 
 (defun string-to-integer (digits)
   (let ((integer (string:to_integer digits)))
-    (tuple 'literal (tuple 'integer integer)))) 
+    (tuple 'literal (tuple 'integer (tref integer 1)))))
 
 (defun get-second
   (((tuple f s)) s))

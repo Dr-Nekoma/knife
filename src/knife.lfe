@@ -37,7 +37,7 @@
   (list-alt (list (application) (abstraction) (condition) (literal) (variable))))
 
 (defun variable ()
-  (parser/map #'ast:make-variable/1 (parser/bind #'basic:invalid-lambda/1 (identifier))))
+  (parser/map #'ast:make-variable/1 (parser/bind #'basic:invalid-keywords/1 (identifier))))
 
 (defun literal ()
   (list-alt (list (any-number) (any-boolean))))
