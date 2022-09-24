@@ -3,8 +3,9 @@
 	  (string-to-boolean 1)
 	  (get-second 1)))
 
-(defun string-to-integer (str)
-  (tref (string:to_integer str) 1)) 
+(defun string-to-integer (digits)
+  (let ((integer (string:to_integer digits)))
+    (tuple 'literal (tuple 'integer integer)))) 
 
 (defun get-second
   (((tuple f s)) s))

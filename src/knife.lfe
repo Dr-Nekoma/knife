@@ -34,7 +34,7 @@
     ((tuple input 'failure (tuple err-message args)) (funcall #'io:format/2 (string:concat "KNIFE| " err-message) args))))
 
 (defun expression ()
-  (list-alt (list (application) (abstraction) (condition) (variable) (literal))))
+  (list-alt (list (application) (abstraction) (condition) (literal) (variable))))
 
 (defun variable ()
   (parser/map #'ast:make-variable/1 (parser/bind #'basic:invalid-lambda/1 (identifier))))

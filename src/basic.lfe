@@ -65,9 +65,7 @@
 (defun any-number ()
   (parser/map
    #'utils:string-to-integer/1
-   (justRight
-    (empty-str)
-    (while (lambda (char) (predicate-number char))))))
+   (many+ (any-digit))))
 
 (defun any-digit ()
   (make-parser
@@ -76,7 +74,7 @@
      (case input
        ("" (tuple input 'failure (tuple  "No characters were found in ~p~n" `,(list input))))
        ((cons head tail) (if (predicate-number head)
-			    (tuple tail 'success (tuple 'literal (tuple 'integer (utils:string-to-integer (list head)))))
+			    (tuple tail 'success head)
 			    (tuple input 'failure  (tuple "No digits were found in ~p~n" `,(list input)))))))))
 
 (defun predicate-boolean (candidate) (or (=:= candidate 84) (=:= candidate 70)))
