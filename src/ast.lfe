@@ -24,7 +24,7 @@
 
 (defun make-abstraction
   (((tuple (tuple parameters '()) body)) (tuple 'abstraction (tuple 'notVariadic (lists:map #'make-argument/1 parameters)) body))
-  (((tuple (tuple parameters variadic) body)) (tuple 'abstraction (tuple 'variadic (lists:append (lists:map #'make-argument/1 parameters) (list (make-argument variadic))) body))))
+  (((tuple (tuple parameters variadic) body)) (tuple 'abstraction (tuple 'variadic (lists:append (lists:map #'make-argument/1 parameters) (list (make-argument variadic)))) body)))
 
 (defun make-arrow
   (((tuple first-type second-type))
