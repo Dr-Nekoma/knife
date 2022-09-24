@@ -26,15 +26,15 @@
 		(make-application 1)
 		(make-abstraction 1)
 		(make-arrow 1))
-	  (from utils (add-variadic-tag 1))))
+	  (from utils (get-second 1))))
 
 (defun parse (file-content)
-  (case (funcall (get-parser (expression))
-		 (build-input file-content))
-    ((tuple input status result) (tuple status result))))
+  (case (funcall (get-parser (expression)) file-content)
+    ((tuple input 'success result) (tuple input 'success result))
+    ((tuple input 'failure (tuple err-message args)) (funcall #'io:format/2 (string:concat "KNIFE| " err-message) args))))
 
 (defun expression ()
-  (list-alt (list (condition) (application) (abstraction) (literal) (variable))))
+  (list-alt (list (application) (abstraction) (condition) (variable) (literal))))
 
 (defun variable ()
   (parser/map #'ast:make-variable/1 (parser/bind #'basic:invalid-lambda/1 (identifier))))
@@ -73,10 +73,10 @@
 	  (justRight (whitespaces+) (type))
 	  (seq (whitespaces*) (char ")"))))
 	(whitespaces*)))
-       (optional (variadic)))
+       (optional (typed-variadic)))
      (seq (whitespaces*) (char "]"))))))
 
-(defun variadic ()
+(defun typed-variadic ()
   (justRight
    (char "&")
    (justLeft
@@ -117,7 +117,7 @@
   (parser-header
    (alt
     (type-atom)
-    (arrow))))
+    (type-arrow))))
 
 (defun type-atom ()
   (parser-header
@@ -125,34 +125,32 @@
     (prefix "Integer")
     (prefix "Boolean"))))
 
-(defun type-variadic ()
-  (parser/map
-   #'utils:add-variadic-tag/1
-   (parser-header
-    (justRight
-     (char "&")
-     (type)))))
-
 (defun variadic-arg ()
   (parser-header
-    (optional (justRight (char "&") (type)))))
+   (justRight
+    (seq (whitespaces+) (char "&"))
+    (type))))
 
 (defun non-empty-arg ()
-  (parser-header
-    (many+
-     (justLeft
-      (type)
-      (whitespaces*)))))
+  (flet ((get-types (list-t)
+		    (lists:map #'utils:get-second/1 list-t)))
+    (parser/map
+     #'get-types/1
+     (parser-header
+      (many+
+       (seq
+	(whitespaces*)
+	(type)))))))
 
 (defun args ()
   (parser-header
    (justRight
-    (seq (char "(") (whitespaces*))
+    (char "(")
     (justLeft
-     (seq (optional (non-empty-arg)) (variadic-arg))
+     (seq (optional (non-empty-arg)) (optional (variadic-arg)))
      (seq (whitespaces*) (char ")"))))))
 
-(defun arrow ()
+(defun type-arrow ()
   (parser/map
    #'ast:make-arrow/1
    (parser-header

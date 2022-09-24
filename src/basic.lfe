@@ -6,7 +6,6 @@
 	  (justLeft 2)
 	  (justRight 2)
 	  (build-parser 1)
-	  (build-input 1)
 	  (get-parser 1)
 	  (list-alt 1)
 	  (seq 2)
@@ -29,10 +28,6 @@
 (defun get-parser (parser)
   (parser-run parser))
 
-(defrecord input
-  text
-  position)
-
 (defun empty ()
   (make-parser run (lambda (input) (tuple input 'success '()))))
 
@@ -40,11 +35,6 @@
   (make-parser
    run
    lamb))
-
-(defun build-input (content)
-  (make-input
-   text
-   content))
 
 (defun parser/map (f parser)
   "F: 'T -> 'U
@@ -77,29 +67,29 @@
    #'utils:string-to-integer/1
    (justRight
     (empty-str)
-    (while #'predicate-number/1))))
+    (while (lambda (char) (predicate-number char))))))
 
 (defun any-digit ()
   (make-parser
    run
    (lambda (input)
-     (case (input-text input)
-       ("" (tuple input 'failure "No characters were found | any-number"))
+     (case input
+       ("" (tuple input 'failure (tuple  "No characters were found in ~p~n" `,(list input))))
        ((cons head tail) (if (predicate-number head)
-			    (tuple (make-input text tail) 'success (tuple 'literal (tuple 'integer (utils:string-to-integer (list head)))))
-			    (tuple input 'failure "No digits were found")))))))
+			    (tuple tail 'success (tuple 'literal (tuple 'integer (utils:string-to-integer (list head)))))
+			    (tuple input 'failure  (tuple "No digits were found in ~p~n" `,(list input)))))))))
 
-(defun check-boolean (candidate) (or (=:= candidate 84) (=:= candidate 70)))
+(defun predicate-boolean (candidate) (or (=:= candidate 84) (=:= candidate 70)))
 
 (defun any-boolean ()
   (make-parser
    run
    (lambda (input)
-     (case (input-text input)
-       ("" (tuple input 'failure "No characters were found | any-boolean"))
-       ((cons head tail) (if (check-boolean head)
-			    (tuple (make-input text tail) 'success (tuple 'literal (tuple 'boolean (utils:string-to-boolean (list head)))))
-			    (tuple input 'failure "No booleans were found")))))))
+     (case input
+       ("" (tuple input 'failure (tuple  "No characters were found in ~p~n" `,(list input))))
+       ((cons head tail) (if (predicate-boolean head)
+			    (tuple tail 'success (tuple 'literal (tuple 'boolean (utils:string-to-boolean (list head)))))
+			    (tuple input 'failure (tuple  "No booleans were found in ~p~n" `,(list input)))))))))
 
 (defun whitespace ()
   (list-alt (list (char " ") (char "\n") (char "\t") (char "\r\t") (char "\r\n"))))
@@ -124,23 +114,23 @@
    run
    (lambda (input)
      (case output
-       ("lambda" (tuple input 'failure "Found lambda as a variable name"))
+       ("lambda" (tuple input 'failure (tuple  "Found lambda as a variable name in ~p~n" `,(list input))))
        (_ (tuple input 'success output)))))) 
 
 (defun empty-str ()
   (make-parser
    run
    (lambda (input)
-     (case (input-text input)
-       ("" (tuple input 'failure "No characters were found"))
-       (content (tuple (build-input content) 'success '()))))))
+     (case input
+       ("" (tuple input 'failure (tuple  "No characters were found in ~p~n" `,input)))
+       (content (tuple content 'success '()))))))
 
 (defun invalid-chr (str)
   (make-parser
    run
    (lambda (input)
-       (if (=:= str (lists:nth 1 (input-text input)))
-	   (tuple input 'failure "Invalid character encountered!~n")
+       (if (=:= str (lists:nth 1 input))
+	   (tuple input 'failure (tuple  "Invalid character ~p encountered in ~p~n" `,(list str input)))
 	 (tuple input 'success '())))))
 
 (defun identifier ()
@@ -153,7 +143,7 @@
 (defun check-char (chr1 chr2 input new-input)
   (if (=:= chr1 chr2)
     (tuple new-input 'success chr1)
-    (tuple input 'failure "Didn't find specific char")))
+    (tuple input 'failure (tuple  "Didn't find specific char ~p in ~p~n" `,(list chr1 input)))))
 
 (defun char (chr1)
   (make-parser
@@ -168,9 +158,9 @@
   (make-parser
    run
    (lambda (input)
-     (case (input-text input)
-       ("" (tuple input 'failure "No characters were found | any-char"))
-       ((cons head tail) (tuple  (make-input text tail) 'success (list head)))))))
+     (case input
+       ("" (tuple input 'failure (tuple  "No characters were found in ~p~n" `,(list input))))
+       ((cons head tail) (tuple tail 'success (list head)))))))
 
 (defun seq (parserA parserB)
   "ParserA: Parser<'T>
@@ -185,8 +175,8 @@
 	  (let ((next-next (funcall (parser-run parserB) first-input)))
 	    (case next-next
 	      ((tuple second-input 'success second-value) (tuple second-input 'success (tuple first-value second-value)))
-	      ((tuple second-input 'failure message) (tuple second-input 'failure message)))))
-	 ((tuple first-input 'failure message) (tuple first-input 'failure message)))))))
+	      ((tuple second-input 'failure message) (tuple input 'failure message)))))
+	 ((tuple first-input 'failure message) (tuple input 'failure message)))))))
 
 (defun justLeft (parserA parserB)
   "ParserA: Parser<'T>
@@ -242,11 +232,10 @@
   (make-parser
    run
    (lambda (input)
-     (let* ((content (input-text input))
-	    (splitted-content (lists:splitwith predicate content))
+     (let* ((splitted-content (lists:splitwith predicate input))
             (new-input (tref splitted-content 2))
             (value (tref splitted-content 1)))
-       (tuple (build-input new-input) 'success value)))))
+       (tuple new-input 'success value)))))
 
 (defun many+ (parser)
   "Parser: Parser<'T>
@@ -259,7 +248,7 @@
                      ((tuple new-input 'success value) (funcall #'loop/4 new-input parser (cons value acc) (+ 1 nth)))
                      ((tuple new-input 'failure message) (tuple new-input acc nth)))))
        (case (loop input parser '() 0)
-	 ((tuple _ _ 0) (tuple input 'failure "Couldn't parse using many+"))
+	 ((tuple _ _ 0) (tuple input 'failure (tuple  "Couldn't parse using many+ in ~p~n" `,(list input))))
          ((tuple final-input acc _) (tuple final-input 'success (lists:reverse acc))))))))
 
 (defun many* (parser)
@@ -272,6 +261,6 @@
   (make-parser
    run
    (lambda (input)
-     (case (string:prefix (input-text input) str)
-       ('nomatch (tuple input 'failure "Couldn't find prefix"))
-       (rest (tuple (build-input rest) 'success str))))))
+     (case (string:prefix input str)
+       ('nomatch (tuple input 'failure (tuple "Couldn't find prefix ~p in ~p~n" `,(list str input))))
+       (rest (tuple rest 'success str))))))
